@@ -1,0 +1,60 @@
+<!doctype html>
+<!-- public/views/index.html -->
+<html lang="en" ng-app="challengeApp" ng-controller="AppController">
+
+<head>
+    <meta charset="UTF-8">
+    <base href="/">
+    <title>Master your champion</title>
+    <!-- CSS -->
+    <link rel="stylesheet" href="system/css/bootstrap.dark.min.css">
+    <link rel="stylesheet" href="libs/ngDialog/css/ngDialog.min.css" />
+    <link rel="stylesheet" href="libs/angular-ui-select/dist/select.css" />
+    <link rel="stylesheet" href="libs/ng-table/dist/ng-table.min.css" />
+    <!-- CUSTOM CSS -->
+    <link rel="stylesheet" href="dist/css/style.min.css">
+    <!-- JS -->
+    <script type="text/javascript" src="libs/angular/angular.min.js"></script>
+    <script type="text/javascript" src="libs/angular-ui-select/dist/select.min.js"></script>
+    <script type="text/javascript" src="libs/angular-ui-router/release/angular-ui-router.min.js"></script>
+    <script type="text/javascript" src="libs/ngDialog/js/ngDialog.min.js"></script>
+    <script type="text/javascript" src="libs/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+    <script type="text/javascript" src="libs/ng-table/dist/ng-table.min.js"></script>
+    <!-- ANGULAR CUSTOM -->
+    <script type="text/javascript" src="dist/js/app.min.js"></script>
+</head>
+
+<body style="overflow-y:scroll">
+    <div class="container">
+        <!-- Show alerts at the bottom of the screen -->
+        <div ng-repeat="alert in alerts" class="alert {{alert.type}}" style="margin-top: {{screenHeight}}px; bottom: {{alert.pos}}px;">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close" ng-click="closeAlert($index)">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <span>{{alert.msg}}</span><span>{{alert.obj}}</span>
+        </div>
+        <!-- Navigation bar -->
+        <nav class="navbar">
+            <div class="container-fluid">
+                <ul class="nav navbar-nav navbar-left">
+                    <li>
+                        <a ui-sref="home">Home</a>
+                    </li>
+                    <li>
+                        <a ui-sref="statistic({region: 'EUW'})">Show Regions</a>
+                    </li>
+                    <li>
+                        <a ui-sref="about">About</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <!-- ANGULAR DYNAMIC CONTENT -->
+        <div style="min-height: 500px" ui-view></div>
+        <!-- Disclaimer -->
+        <hr class="light-divider" />
+        <div style="font-size:10px;text-align: center">© 2016. "Master your champion" isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing League of Legends. League of Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc. League of Legends © Riot Games, Inc.</div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,2 @@
+// public/system/app.js
+angular.module('challengeApp', ['ngTable', 'ui.bootstrap', 'ui.router', 'appRoutes', 'AppCtrl', 'MainCtrl', 'StatisticCtrl', 'ChampionStatisticCtrl', 'AlertService', 'SummonerService', 'StatisticService', 'ChampionService']);

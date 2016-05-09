@@ -1,0 +1,30 @@
+<div ng-show="state === 'statistic'">
+    <div class="row">
+        <div class="btn-group col-md-4 col-md-offset-4" uib-dropdown>
+            <button id="single-button" type="button" class="btn btn-default" style="width: 100%;" uib-dropdown-toggle>{{selected}}<span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" uib-dropdown-menu role="menu" aria-labelledby="single-button" style="width: 90%; margin-left: 20px;">
+                <li role="menuitem" ng-click="selectRegion($index)" ng-repeat="item in itemArray" style="cursor: pointer"><a>{{item}}</a></li>
+            </ul>
+        </div>
+    </div>
+    <div ng-show="searching" class="row" style="text-align:center; font-size: 20px;font-family: 'Arial Black',Gadget,sans-serif; margin-top: 20px">Retrieving data... <img src="/images/loading.gif"></img>
+    </div>
+    <div ng-show="!searching && summonerCount" style="margin-top: 10px">
+        <div style="text-align:center;">Currently {{ summonerCount }} summoners on file for {{ selected }}.</div>
+        <div style="margin-bottom: 20px; margin-top: 20px" class="clearfix">
+            <button class="col-md-4 btn" style="text-align:center;" ng-class="{'btn-primary': (sorting === 'alpha'), 'btn-default': (sorting !== 'alpha')}" ng-click="sortByAlpha()">Sort Alphabetically</button>
+            <button class="col-md-4 btn" style="text-align:center;" ng-class="{'btn-primary': (sorting === 'score'), 'btn-default': (sorting !== 'score')}" ng-click="sortByScore()">Sort by total Mastery Score</button>
+            <button class="col-md-4 btn" style="text-align:center;" ng-class="{'btn-primary': (sorting === 'avg'), 'btn-default': (sorting !== 'avg')}" ng-click="sortByAverage()">Sort by average Mastery Score</button>
+        </div>
+        <div class="clearfix">
+            <div ng-repeat="champion in champions" class="col-md-2">
+                <div style="width: 120px; margin: 10px auto;">
+                    <img ng-src="/images/champions/{{ champion.id }}.png" ui-sref="statistic.champion({ champion: champion.id })" ui-sref-opts="{reload: true}" uib-tooltip="Total Mastery points: {{championStatistic[champion.key].totalChampionPoints | number}} Average Mastery Points:  {{(championStatistic[champion.key].totalChampionPoints / championStatistic[champion.key].totalPlayers) | number : 0}}" style="cursor: pointer"></img>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Show child view -->
+<div ng-hide="state === 'statistic'" ui-view></div>

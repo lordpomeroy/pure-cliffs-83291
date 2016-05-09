@@ -1,0 +1,23 @@
+<h1>{{championData.name}} Statistics</h1>
+<a ui-sref="statistic({region:region})" ui-sref-opts="{reload: true}">Back to overview</a>
+<h2>Total champion points {{championStatistic.totalChampionPoints | number}} with {{championStatistic.totalPlayers}} active players</h2>
+<table ng-table="tableParams" class="table" show-filter="true" template-header="header">
+    <tr ng-repeat="entry in $data">
+        <td filter="{ summonerName: 'text'}" sortable="'summonerName'" filter="{summonerName: 'text'}" >
+            {{entry.summonerName}}</td>
+        <td sortable="'championPoints'">
+            {{entry.championPoints | number}}</td>
+    </tr>
+</table>
+<script type="text/ng-template" id="header">
+    <tr>
+        <td>Summoner name</td>
+        <td>Champion points</td>
+    </tr>
+    <tr>
+        <td>
+            <input type="text" class="form-control" ng-model="summonerName" style="width:100%">
+        </td>
+        <td></td>
+    </tr>
+</script>

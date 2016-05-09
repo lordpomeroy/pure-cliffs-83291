@@ -1,0 +1,16 @@
+{
+  "name": "API-Challenge-2016-TM",
+  "version": "0.1.0",
+  "dependencies": {
+    "bootstrap-css-only": "latest",
+    "angular-bootstrap": "latest",
+    "font-awesome": "latest",
+    "animate.css": "latest",
+    "angular": "latest",
+    "ngDialog": "~0.3.12",
+    "angular-local-storage": "~0.1.5",
+    "angular-ui-select": "latest",
+    "angular-ui-router": "~0.2.15",
+    "ng-table": "~0.8.3"
+  }
+}
