@@ -48,6 +48,7 @@ exports.getRegionStatistic = function(req, res) {
     var diffMin = Math.round(diffMs / 60000);
     // check the maximum difference, recalculate if the data is too old. Always return the last calculated data as this operation takes a long time.
     if (diffMin > allowedAge.statistic) {
+      console.log('Recalculating ' + req.params.region);
       // Recalculate the statistics, this may take a while
       Summoner.find({
         region: req.params.region

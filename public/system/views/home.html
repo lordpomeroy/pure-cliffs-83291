@@ -33,14 +33,14 @@
             <span ng-show="sorting === 'score' && order === 'desc'" class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span>
             <span ng-show="sorting !== 'score' || order === 'asc'" class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span>
         </button>
-        <button class="col-md-4 btn" style="text-align:center;" ng-class="{'btn-primary': (sorting === 'max'), 'btn-default': (sorting !== 'max')}" ng-click="sortByMax()">Points to next Level</button>
-        <button ng-show="selected === 'EUW' || selected === 'NA'" class="col-md-4 btn" style="text-align:center;" ng-class="{'btn-primary': (sorting === 'ranking'), 'btn-default': (sorting !== 'ranking')}" ng-click="sortByRanking()">Sort by ranking in region
+        <button class="col-md-4 btn" style="text-align:center;" ng-class="{'btn-primary': (sorting === 'max'), 'btn-default': (sorting !== 'max')}" ng-click="sortByMax()" >Points to next Level</button>
+        <button ng-show="selected === 'EUW' || selected === 'NA'" class="col-md-4 btn" style="text-align:center;" ng-class="{'btn-primary': (sorting === 'ranking'), 'btn-default': (sorting !== 'ranking')}" ng-click="sortByRanking()" uib-tooltip="Only working if the summoner was already in the database at the moment of the last statistical calculation">Sort by ranking in region
             <span ng-show="sorting === 'ranking' && order === 'desc'" class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span>
             <span ng-show="sorting !== 'ranking' || order === 'asc'" class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span>
         </button>
     </div>
     <div ng-repeat="mastery in summoner.masteries" class="col-md-2">
-        <div style="width: 120px; margin: 0 auto;" uib-tooltip="Last Played: {{mastery.lastPlayTime | date}} Points to Next Level: {{ mastery.championPointsUntilNextLevel }} {{ mastery.ranking }}">
+        <div style="width: 120px; margin: 0 auto; cursor: pointer" uib-tooltip="Last Played: {{mastery.lastPlayTime | date}} Points to Next Level: {{ mastery.championPointsUntilNextLevel }} Rank in region: {{ mastery.ranking }}" ui-sref="statistic.champion({region: selected, champion: mastery.champion.id })">
             <img ng-src="/images/champions/{{ mastery.champion.id }}.png"></img>
             <img ng-src="/images/Level_{{ mastery.championLevel }}.png" style="margin-left: 17px; margin-top: -20px"></img>
             <div style="width: 120px; text-align:center; font-size: 25px;font-family: 'Arial Black',Gadget,sans-serif">{{mastery.championPoints | number}}</div>

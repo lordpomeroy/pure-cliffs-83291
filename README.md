@@ -17,9 +17,9 @@ Researching a single summoner with all its summoner masteries. This feature is a
 This site uses Game data of 2 servers to create an overview over the players in this regions. The collected data is used to show comparison values in the Home tab aswell. The servers used are: Europe West (EUW) and North America (NA).
 
 Currently a total of approximately 4,000 summoners are on file. This includes:
-    * Most popular Champions by accumulated champion points
-    * Player ranking on a single champion
-    * Average and total champion points on a champion
+* Most popular Champions by accumulated champion points
+* Player ranking on a single champion
+* Average and total champion points on a champion
 
 ## Development
 
