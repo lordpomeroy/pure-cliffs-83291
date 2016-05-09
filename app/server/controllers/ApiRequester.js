@@ -1,10 +1,6 @@
 var appPath = process.cwd() + '/app/';
 
 // Dependencies
-require(appPath + 'server/models/Summoner.js');
-
-var mongoose = require('mongoose');
-var Summoner = mongoose.model('Summoner');
 var request = require('request');
 var fs = require('fs');
 var colors = require('colors/safe');
@@ -36,6 +32,7 @@ var normalRequests = [];
  */
 var apiRequest = function(url, priority, callback) {
   'use strict';
+  // Add the request to the queue
   if (priority) {
     priorityRequets.push({
       url: url,
@@ -47,12 +44,14 @@ var apiRequest = function(url, priority, callback) {
       callback: callback
     });
   }
+  // Choose the next request to send. High priority request are done first.
   var requestUrl;
   if (priorityRequets.length > 0) {
     requestUrl = priorityRequets.shift().url;
   } else {
     requestUrl = normalRequests.shift().url;
   }
+  // Send the request
   request.get(requestUrl, function(err, response, body) {
     if (err !== null) {
       logger.log(err.message, 'error', 'lol/controllers/ApiRequester - apiRequest');
@@ -67,6 +66,7 @@ var apiRequest = function(url, priority, callback) {
         status = colors.red(response.statusCode);
       }
       logger.log(requestUrl + ' ' + status, 'apiRequest', 'lol/controllers/ApiRequester - apiRequest', body);
+      // Decide on action based on the response
       if (response.statusCode === 404) {
         callback(404, body);
       } else if (response.statusCode === 429) {
@@ -76,7 +76,7 @@ var apiRequest = function(url, priority, callback) {
         // retry if we recieved an 500, set timeout to 5 min
         setTimeout(apiRequest, 5 * 60 * 1000, url, priority, callback);
       } else {
-        // TODO alle anderen Statuscodes abfangen
+        // return the retrieved data
         callback(null, body);
       }
     }
@@ -89,7 +89,7 @@ var apiRequest = function(url, priority, callback) {
 
 /**
  * Checks the config file for the current version and sends an update request if the version is older then 24 h.
- * @param {function()} callback
+ * @param {function()} callback - callback function to execute after the request
  */
 exports.getStaticDataVersion = function(callback) {
   'use strict';
@@ -99,8 +99,7 @@ exports.getStaticDataVersion = function(callback) {
     var data = fs.readFileSync(versionConfig);
     config = JSON.parse(data);
   } catch (err) {
-    console.log('There has been an error parsing your JSON.');
-    console.log(err);
+    logger.log('There has been an error parsing your JSON.', 'error', 'lol/controllers/ApiRequester - getStaticDataVersion', err);
   }
 
   var diffHrs = 0;
@@ -114,11 +113,12 @@ exports.getStaticDataVersion = function(callback) {
   }
 
   if (config === null || diffHrs > 24) {
-    console.log(lol.apiStatic + 'v1.2/versions?api_key=' + keys.apiKey);
+    // Request the new version
     request.get(lol.apiStatic + 'v1.2/versions?api_key=' + keys.apiKey, function(error, response, body) {
       if (error !== null) {
         callback(null, error);
       } else {
+        // Store the data
         var data = JSON.parse(body);
         var version = data[0];
         var config = {
@@ -126,10 +126,10 @@ exports.getStaticDataVersion = function(callback) {
           lastUpdated: new Date()
         };
 
+        // Save the data to a file
         fs.writeFile(versionConfig, JSON.stringify(config), function(err) {
           if (err) {
-            console.log('There has been an error saving your configuration data.');
-            console.log(err.message);
+            logger.log('There has been an error saving your configuration data.', 'error', 'lol/controllers/ApiRequester - getStaticDataVersion', err);
             callback(null, err);
           } else {
             callback(config.version, null);
@@ -138,33 +138,20 @@ exports.getStaticDataVersion = function(callback) {
       }
     });
   } else {
-    console.log('Use saved data dragon version.');
+    logger.log('Use saved data dragon version.', 'info', 'lol/controllers/ApiRequester - getStaticDataVersion');
     callback(config.version, null);
   }
 };
 
 /**
- * Gets the profile picture for the given id from the data dragon and pipes it to the given res stream
- * @param {int} pictureId
- * @param {Object} res
- */
-exports.getProfilePicture = function(pictureId, res) {
-  'use strict';
-  console.log('ApiRequester - getProfilePicture');
-  exports.getStaticDataVersion(function(version) {
-    console.log(lol.dataDragonBase + version + lol.dataDragonProfilePicture + pictureId + '.png');
-    var url = lol.dataDragonBase + version + lol.dataDragonProfilePicture + pictureId + '.png';
-    request.get(url).pipe(res);
-  });
-};
-
-/**
  * Download the current champion data from the data dragon and store it locally.
+ * @param {function()} callback -  callback function to execute after the request
  */
 exports.getChampionData = function(callback) {
   'use strict';
+  // Get the current data dragon version
   exports.getStaticDataVersion(function(version) {
-    console.log(lol.dataDragonBase + version + lol.dataDragonUSData + 'champion.json');
+    // Send a request to get the data
     request.get(lol.dataDragonBase + version + lol.dataDragonUSData + 'champion.json', function(error, response, body) {
       if (error !== null) {
         callback(null, error);
@@ -173,41 +160,17 @@ exports.getChampionData = function(callback) {
           championData: JSON.parse(body),
           lastUpdated: new Date()
         };
+        // Store tha data locally
         fs.writeFile(championData, JSON.stringify(data), function(err) {
           if (err) {
-            console.log('There has been an error saving your champion data.');
-            console.log(err.message);
+            logger.log('There has been an error saving your champion data.', 'error', 'lol/controllers/ApiRequester - getStaticDataVersion', err);
+            callback(err, data);
+          } else {
+            callback(null, data);
           }
-          callback(null, data);
         });
       }
     });
-  });
-};
-
-/**
- * Gets the champion loading picture for the given champion id from the data dragon and pipes it to the given res stream
- * @param {int} champion
- * @param {Object} res
- */
-exports.getChampionLoadingPicture = function(champion, res) {
-  'use strict';
-  console.log(lol.dataDragonBase + lol.dataDragonChampionLoadingPicture + champion + '_0.jpg');
-  var url = lol.dataDragonBase + lol.dataDragonChampionLoadingPicture + champion + '_0.jpg';
-  request.get(url).pipe(res);
-};
-
-/**
- * Gets the champion loading picture for the given champion id from the data dragon and pipes it to the given res stream
- * @param {int} champion
- * @param {Object} res
- */
-exports.getChampionSquarePicture = function(champion, res) {
-  'use strict';
-  exports.getStaticDataVersion(function(version) {
-    console.log(lol.dataDragonBase + version + lol.dataDragonChampionSquarePicture + champion + '.png');
-    var url = lol.dataDragonBase + version + lol.dataDragonChampionSquarePicture + champion + '.png';
-    request.get(url).pipe(res);
   });
 };
 
@@ -216,9 +179,10 @@ exports.getChampionSquarePicture = function(champion, res) {
 // ====================================================================
 
 /**
- * Send an request to the League API
- * @param {Object} summonerName
- * @param {function()} callback
+ * Takes a summonerName and retrives the corresponding summoner data from the League of Legends API-
+ * @param  {String} summonerName  The summonerName according to the League of Legends API to request.
+ * @param  {String} region        The region to query.
+ * @param  {function()} callback    Callback to be executed when the operation finishes. Takes an error Object and the summoner data.
  */
 exports.getSummonerByName = function(summonerName, region, callback) {
   'use strict';
@@ -229,53 +193,56 @@ exports.getSummonerByName = function(summonerName, region, callback) {
         msg: "Summoner does not exist."
       }], null);
     } else {
-      // TODO alle anderen Statuscodes abfangen
       callback(null, JSON.parse(body)[summonerName.toLowerCase().replace(/ /g, '')]);
     }
   });
 };
 
 /**
- *
- * @param {Object} summonerId
- * @param {function()} callback
+ * Takes a summonerId and retrives the corresponding summoner data from the League of Legends API-
+ * @param  {Integer} summonerId  The summonerId according to the League of Legends API to request.
+ * @param  {String} region       The region to query.
+ * @param  {function()} callback Callback to be executed when the operation finishes. Takes an error Object and the summoner data.
  */
 exports.getSummonerById = function(summonerId, region, callback) {
   'use strict';
   // Request to the lol api
-  apiRequest(lol.regions[region].host + '/api/lol/' + region + '/v1.4/summoner/' + encodeURIComponent(summonerId) + '?api_key=' + keys.apiKey, false, function(err, body) {
+  apiRequest(lol.regions[region].host + '/api/lol/' + region + '/v1.4/summoner/' + summonerId + '?api_key=' + keys.apiKey, false, function(err, body) {
     if (err === 404) {
       callback([{
         msg: "Summoner does not exist."
       }], null);
     } else {
-      // TODO alle anderen Statuscodes abfangen
       callback(null, JSON.parse(body)[summonerId]);
     }
   });
 };
 
 /**
- * Get the current game for the given summoner id and region.
- * @param {Number} summonerId
- * @param {String} region
- * @param {Object} callback
+ * Get the current game for the given summonerId and region.
+ * @param {Number} summonerId   The summonerId according to the League of Legends API to request.
+ * @param {String} region       The region to query.
+ * @param {function()} callback Callback to be executed when the operation finishes. Takes an error Object and the game data.
  */
 exports.getCurrentGame = function(summonerId, region, callback) {
   'use strict';
-  if (summonerId === null) {
-    console.log('Summoner may not be empty');
-    callback(null, null);
-    return;
-  }
+  // Request to the lol api
   apiRequest(lol.regions[region].host + '/observer-mode/rest/consumer/getSpectatorGameInfo/' + lol.regions[region].platform + '/' + summonerId + '?api_key=' + keys.apiKey, true, function(err, body) {
-    if (err) {
-      console.log(err);
+    if (err !== 404) {
+      callback([{
+        msg: "There has been an error accessing the data."
+      }], null);
+    } else {
+      callback(err, JSON.parse(body));
     }
-    callback(err, JSON.parse(body));
   });
 };
 
+/**
+ * Get the champion masteries for the given summoner.
+ * @param {Object} summoner     The summoner object to query.
+ * @param {function()} callback Callback to be executed when the operation finishes. Takes an error Object and the champion mastery data.
+ */
 exports.getMasteryBySummoner = function(summoner, callback) {
   'use strict';
   // Request to the lol api
@@ -285,7 +252,6 @@ exports.getMasteryBySummoner = function(summoner, callback) {
         msg: "Summoner does not exist."
       }], null);
     } else {
-      // TODO alle anderen Statuscodes abfangen
       callback(null, JSON.parse(body));
     }
   });

@@ -21,7 +21,7 @@ module.exports = function(app) {
   // use the prefix '/api' for all API-routes
   app.use('/api', router);
   // show the available routes at server startup
-  require(appPath + '../showRouting')(router.stack);
+  require(appPath + 'server/showRouting')(router.stack);
 
   // deploy angular for all routes that do not start with '/api'
   app.get(/^\/(?!api).*/, function(req, res) {

@@ -2,6 +2,5 @@ var controller = require('../controllers/SummonerBackController');
 
 module.exports = function(router) {
   'use strict';
-  var route = '/summoner';
-  router.get(route + '/:region/:summonerName', controller.getSummonerByName);
+  router.get('/summoner/:region/:summonerName', controller.getSummonerByName);
 };

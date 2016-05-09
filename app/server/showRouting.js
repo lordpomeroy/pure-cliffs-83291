@@ -1,4 +1,5 @@
 module.exports = function(routes, src) {
+  'use strict';
   var Table = require('cli-table');
   var table = new Table({
     head : ["", "Path"]

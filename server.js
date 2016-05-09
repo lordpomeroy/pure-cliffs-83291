@@ -52,7 +52,7 @@ app.use(express.static(__dirname + '/public'));
 // routes ========================================================
 
 // Load all other routes
-require('./app/config/routes')(app);
+require('./app/server/routes')(app);
 
 // start app =====================================================
 // startup our app at http://localhost:8080

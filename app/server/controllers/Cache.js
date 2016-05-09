@@ -14,7 +14,7 @@ var ApiRequester = require('./ApiRequester.js');
 var logger = require(appPath + 'server/logger.js');
 
 // ====================================================================
-// Config
+// Configuration
 // ====================================================================
 var configDir = appPath + '/config/lol/';
 var lol = require(configDir + 'lol.js');
@@ -23,7 +23,7 @@ var versionConfig = configDir + 'version.json';
 var championDataFile = 'downloads/champion.json';
 
 // ====================================================================
-// Cahed CHampion Data
+// Cahed Champion Data
 // ====================================================================
 var championData;
 
@@ -156,10 +156,11 @@ var updateSummoner = function() {
 // ====================================================================
 
 /**
- * Takes a summonerName and retrives the corresponding summoner data from cache. Queues a new Request to the League of Legends API if the cached data is too old.
- * @param  {Integer} summonerName The summonerName according to the League of Legends API to request.
+ * Takes a summonerName or summonerId and retrives the corresponding summoner data from cache. Queues a new Request to the League of Legends API if the cached data is too old.
+ * @param  {String} summonerName  The summonerName according to the League of Legends API to request.
+ * @param  {Integer} summonerId   The summonerId according to the League of Legends API to request.
  * @param  {String} region        The region to query.
- * @param  {Function} callback    Callback to be executed when the operation finishes. Takes an error Object an the summoner data.
+ * @param  {Function} callback    Callback to be executed when the operation finishes. Takes an error Object and the summoner data.
  */
 exports.getSummoner = function(summonerName, summonerId, region, callback) {
   'use strict';
@@ -174,10 +175,16 @@ exports.getSummoner = function(summonerName, summonerId, region, callback) {
     }], null);
   }
 
+  /**
+   * Updated or requests the given summoner depending. If the summoner is valid it returns the cached data. Otherwise the summoner is updated via an API request.
+   * @param  {Object} summoner Summoner object to update/request. Only contains the region and name in case of a new request.
+   * @param  {Boolean} valid   Flag if the local summoner data is valid or not
+   * @return {cuntion()}       callback function after the request to the API
+   */
   var requestSummoner = function(summoner, valid) {
     /**
      * Takes the summoner data and processes it.
-     * @param  {Object} err  Error Object given from ApiRequester during sync operation
+     * @param  {Object} err  Error Object given from ApiRequester during request
      * @param  {Object} data Summoner data as JSON
      */
     var processSummonerData = function(err, data) {
@@ -188,10 +195,12 @@ exports.getSummoner = function(summonerName, summonerId, region, callback) {
           msg: "An error occured during processing the champion data."
         }], null);
       } else {
+        // Set the values for level, profileIcon, revisionDate and summonerName
         summoner.level = data.summonerLevel;
         summoner.profileIcon = data.profileIconId;
         summoner.revisionDate = data.revisionDate;
         summoner.summonerName = data.name;
+        // Set update date
         var lastUpdated = summoner.updated;
         if (!valid) {
           summoner.updated = new Date();
@@ -205,6 +214,7 @@ exports.getSummoner = function(summonerName, summonerId, region, callback) {
           if (err) {
             return callback(err, summoner);
           }
+          // Get the corresponding champion masteries
           ApiRequester.getMasteryBySummoner(summoner, function(err, masteries) {
             if (err) {
               return callback(err, summoner);
@@ -212,33 +222,45 @@ exports.getSummoner = function(summonerName, summonerId, region, callback) {
             if (!summoner.masteries) {
               summoner.masteries = [];
             }
+            /**
+             * Processes the given mastery array. Takes the first entr in the array and dalls itself recursively.
+             * @param  {Object} masteries The array of masteries to process
+             * @return {function()}       function including an error object and the final summoner object
+             */
             var processMastery = function(masteries) {
+              // If the array is empty finish the recursion
               if (masteries.length !== 0) {
+                // Create a mastery object
                 var mastery = new Mastery(masteries.pop());
-                //if (mastery.lastPlayTime.getTime() < lastUpdated.getTime()) {
-                //  console.log('Skipped mastery ' + mastery.lastPlayTime.getTime() + ' : ' + lastUpdated.getTime());
-                //  processMastery(masteries);
-                //} else {
+                // Skip the mastery if it hasnt changed since the last update
+                if (mastery.lastPlayTime.getTime() < lastUpdated.getTime()) {
+                  processMastery(masteries);
+                } else {
+                  // remove the connection between the summoner and the old mastery
                   for (var i = 0; i < summoner.masteries.length; i++) {
                     if (summoner.masteries[i].championId === mastery.championId) {
                       summoner.masteries.splice(i, 1);
                       break;
                     }
                   }
+                  // remove the old mastery
                   Mastery.findOneAndRemove({
                     playerId: mastery.playerId,
                     championId: mastery.championId
                   }, {}, function(err, deleted) {
+                    // save the new mastery
                     mastery.save(function(err) {
                       if (err) {
                         return callback(err, summoner);
                       }
+                      // Add the new mastery to the summoner
                       summoner.masteries.push(mastery);
                       processMastery(masteries);
                     });
                   });
-                //}
+                }
               } else {
+                // save, populate and return the summoner
                 summoner.save(function(err, summoner) {
                   if (err) {
                     return callback(err, summoner);
@@ -260,9 +282,10 @@ exports.getSummoner = function(summonerName, summonerId, region, callback) {
       }
     };
     if (valid) {
-      //logger.log('Using Cached values', 'info', 'lol/controllers/Cache - getSummoner', summoner);
+      logger.log('Using Cached values', 'info', 'lol/controllers/Cache - getSummoner', summoner);
       return callback(null, summoner);
     } else {
+      // If the summoner is not valid query it again
       if (summoner.summonerName === undefined) {
         ApiRequester.getSummonerById(summoner.summonerId, summoner.region, processSummonerData);
       } else {
@@ -271,6 +294,7 @@ exports.getSummoner = function(summonerName, summonerId, region, callback) {
     }
   };
 
+  // Set the options depending on search for summonerName or summonerId
   var options;
   if (summonerName) {
     options = {
@@ -290,10 +314,10 @@ exports.getSummoner = function(summonerName, summonerId, region, callback) {
     };
   }
 
+  // Retrieve the given summoner from the database
   Summoner.findOne(options).populate('masteries').exec(function(err, summoner) {
     if (err) {
-      console.log('There has been an error accessing the Summoner.');
-      console.log(err);
+      logger.log('There has been an error accessing the Summoner.', 'info', 'lol/controllers/Cache - getSummoner', err);
       return {
         err: [{
           msg: "The summoner data is currently not available."
@@ -301,6 +325,7 @@ exports.getSummoner = function(summonerName, summonerId, region, callback) {
         data: null
       };
     }
+    // Devide if the saved date is valid
     var valid = false;
     if (summoner !== null) {
       valid = isValid(summoner.updated, allowedAge.summoner);
@@ -314,6 +339,7 @@ exports.getSummoner = function(summonerName, summonerId, region, callback) {
       }
       summoner.region = region;
     }
+    // Update or request the summoner
     requestSummoner(summoner, valid);
   });
 };
@@ -323,12 +349,12 @@ exports.getSummoner = function(summonerName, summonerId, region, callback) {
 // ====================================================================
 
 /**
- * Retrives the champion data from cache. Queues a new Request to the League of Legends API if the cached data is too old.
- * @param  {Integer} championKey The championKey according to the League of Legends API to request.
+ * Retrieves the champion data from cache. Queues a new Request to the League of Legends API if the cached data is too old.
  * @param  {Function} callback   Callback to be executed when the operation finishes. Takes an error Object an the champion data.
  */
 exports.getChampions = function(callback) {
   'use strict';
+  // Check the javascript object, then load from file
   if (!championData) {
     var load = loadChampionData();
     if (load.err !== null) {
@@ -339,22 +365,15 @@ exports.getChampions = function(callback) {
     championData = load.data;
   }
 
-  /**
-   * Takes the champion data and finds the data for the searched id. Calls callback with the champion or an error if no champion is found.
-   * @param  {Object} err            Error Object given from ApiRequester during sync operation
-   * @param  {Object[]} championData Champion data Array
-   */
-  var processChampionData = function(err, championData) {
-    if (err) {
-      return callback(err, null);
-    }
-    return callback(null, championData.championData.data);
-  };
-
+  // If the data is valid return it
   if (isValid(championData.lastUpdated, allowedAge.championData)) {
-    processChampionData(null, championData);
+    return callback(null, championData.championData.data);
   } else {
-    ApiRequester.getChampionData(function() {});
-    processChampionData(null, championData);
+    // Query a new request and return the old data for fast user expierience
+    ApiRequester.getChampionData(null, function(err, data) {
+      // Replace the stored data
+      championData = data;
+    });
+    return callback(null, championData.championData.data);
   }
 };

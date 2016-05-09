@@ -10,3 +10,8 @@
   width: 1130px;
   height: 52px;
 }
+/* Override text shadow for ng-table */
+.ng-table th.sortable.sort-desc,
+.ng-table th.sortable.sort-asc {
+  text-shadow: 0 0 0 rgba(255, 255, 255, 0) !important;
+}

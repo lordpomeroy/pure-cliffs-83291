@@ -1,21 +1,12 @@
 var appPath = process.cwd() + '/app/';
 
 // Dependencies
-require(appPath + 'server/models/Summoner.js');
-
-var mongoose = require('mongoose');
-var logger = require(appPath + 'server/logger.js');
-
-var Summoner = mongoose.model('Summoner');
-
-var ApiRequester = require('./ApiRequester.js');
 var Cache = require('./Cache.js');
 
-var lol = require(appPath + 'config/lol/lol.js');
-
 /**
- * @param {Object} req
- * @param {Object} res 
+ * Retrieves the summoner from cache.
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
  */
 exports.getSummonerByName = function(req, res) {
   'use strict';

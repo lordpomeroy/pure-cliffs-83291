@@ -13,6 +13,7 @@ angular.module('ChampionService', []).factory('ChampionService', ['$http', 'Aler
     ChampionService.get = function() {
       // Send the request to the server
       return $http.get('/api/static/champion', {}).then(function(body) {
+        console.log(body.data);
         for (var key in body.data) {
           ChampionService.champions[body.data[key].id] = body.data[key];
         }

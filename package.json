@@ -20,8 +20,7 @@
     "method-override": "^2.3.5",
     "mongoose": "~3.8.0",
     "morgan": "^1.7.0",
-    "request": "^2.60.0",
-    "winston": "^2.2.0"
+    "request": "^2.60.0"
   },
   "devDependencies": {
     "grunt": "~0.4.5",
